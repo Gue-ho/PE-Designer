@@ -56,9 +56,12 @@ class PeDesigner:
 
     def find_target(self):
         pattern = 'N'*self.rna_len + self.pam
-        pattern = '(' + pattern + ')|(' + rev_comp(pattern) + ')'
+        pattern = '(' + pattern + ')'
         pattern = pattern.replace('N', '[AGTC]').replace('R', '[AG]').replace('W', '[AT]').replace('M', '[AC]').replace('Y', '[CT]').replace('S', '[GC]').replace('K', '[GT]').replace('B', '[CGT]').replace('D', '[AGT]').replace('H', '[ACT]').replace('V', '[ACG]')
         pattern = re.compile(pattern)
+        pattern_r = '(' + rev_comp('N' * self.rna_len + self.pam) + ')'
+        pattern_r = pattern_r.replace('N', '[AGTC]').replace('R', '[AG]').replace('W', '[AT]').replace('M', '[AC]').replace('Y', '[CT]').replace('S', '[GC]').replace('K', '[GT]').replace('B', '[CGT]').replace('D', '[AGT]').replace('H', '[ACT]').replace('V', '[ACG]')
+        pattern_r = re.compile(pattern_r)
         pam_pattern = re.compile(self.pam.replace('N', '[AGTC]').replace('R', '[AG]').replace('W', '[AT]').replace('M', '[AC]').replace('Y', '[CT]').replace('S', '[GC]').replace('K', '[GT]').replace('B', '[CGT]').replace('D', '[AGT]').replace('H', '[ACT]').replace('V', '[ACG]'))
 
         pos = 0
@@ -66,7 +69,7 @@ class PeDesigner:
         targets = []
         while m != None:
             seq = m.group()
-            pos = m.start()
+            pos = m.start() 
             if m.group(1) != None:
                 pbs_l = []
                 rtt_l = []
@@ -77,8 +80,7 @@ class PeDesigner:
                     continue
                 strand = '+'
                 rel_pos = round((pos+(self.rna_len-3))*100/len(self.ref_seq),2)
-                edit_pos = self.mutation_st - pos + 16 + 1
-                print(self.ind_seq[pos+self.rna_len: pos + self.rna_len + len(self.pam)])
+                edit_pos = self.mutation_st - (pos + 16)
                 if pam_pattern.search(self.ind_seq[pos+self.rna_len: pos + self.rna_len + len(self.pam)]) != None:
                     pam_change = 'No'
                 else:
@@ -91,59 +93,64 @@ class PeDesigner:
                         continue
                     rtt_s =  self.ind_seq[pos + self.rna_len - 3: pos + self.rna_len -3 + x]
                     rtt_l.append([rtt_s, x, gc(rtt_s)])
-            
-                if seq[:self.rna_len] + ' ' + str(self.mm_num - 1) not in self.offinder_input:
-                    self.offinder_input.append(seq[:self.rna_len] + ' ' + str(self.mm_num - 1))
+                
+                off_s = seq[:self.rna_len] + 'N' * len(self.pam) + ' ' + str(self.mm_num - 1) 
+                if off_s not in self.offinder_input:
+                    self.offinder_input.append(off_s)
                     self.off_d[seq[:self.rna_len]] = []
                     for x in range(self.mm_num):
                         self.off_d[seq[:self.rna_len]].append(0)
                 
-                sub_res = [seq, [pos, rel_pos, strand, gc(seq[:self.rna_len]), edit_pos, pam_change], pbs_l, rtt_l, []]
+                sub_res = [seq, [pos + 1, rel_pos, strand, gc(seq[:self.rna_len]), edit_pos, pam_change], pbs_l, rtt_l, []]
 
-                for i in range(self.mm_num):
-                    sub_res[1].append(0)
                 self.seq_list.append(sub_res)
-
+            pos += 1
+            m = pattern.search(self.ref_seq, pos)
+        
+        pos = 0 
+        m = pattern_r.search(self.ref_seq, pos)
+        while m != None:
+            seq = m.group()
+            pos = m.start()
             if m.group(1) != None:
+                seq = rev_comp(seq)
                 pbs_l = []
                 rtt_l = []
                 rp = rev_pos(len(self.ref_seq), (pos + self.rna_len + len(self.pam) - 1))
                 minlen_rtt = rev_pos(len(self.needle_res[0]), self.mutation_st - 1) - (rp + self.rna_len - 3 - 1) - self.needle_res[2].count('-')
                 if rev_pos(len(self.needle_res[0]), self.mutation_ed) < rp + self.rna_len - 3 - 1 or minlen_rtt > self.rtt_max:
                     pos += 1
-                    m = pattern.search(self.ref_seq, pos)
+                    m = pattern_r.search(self.ref_seq, pos)
                     continue
-                seq = rev_comp(seq)
                 strand = '-'
                 rel_pos = round((pos+(3+len(self.pam)))*100/len(self.ref_seq),2)
-                edit_pos = pos + 6 - self.mutation_ed + 1
+                edit_pos = pos + self.needle_res[0].count('-')+ 6 - self.mutation_ed + 1
                 if pam_pattern.search(rev_comp(self.ind_seq)[rp - self.rna_len - len(self.pam): rp - self.rna_len]) != None:
                     pam_change = 'No'
                 else:
                     pam_change = 'Yes'
                 for x in range(self.pbs_min, self.pbs_max + 1):
-                    pbs_s = ref_seq[pos + len(self.pam) + 3: pos + len(self.pam) + 3 + x]
+                    pbs_s = self.ref_seq[pos + len(self.pam) + 3: pos + len(self.pam) + 3 + x]
                     pbs_l.append([pbs_s, x, gc(pbs_s)])
                 for x in range(self.rtt_min, self.rtt_max + 1):
                     if minlen_rtt > x:
                         continue
                     rtt_s = rev_comp(rev_comp(self.ind_seq)[rp + self.rna_len - 3: rp + self.rna_len - 3 + x])
                     rtt_l.append([rtt_s, x, gc(rtt_s)])
-
-                if seq[:self.rna_len] + ' ' + str(self.mm_num - 1) not in self.offinder_input:
-                    self.offinder_input.append(seq[:self.rna_len] + ' ' + str(self.mm_num - 1))
+                
+                off_s = seq[:self.rna_len] + 'N' * len(self.pam) + ' ' + str(self.mm_num - 1)
+                if off_s not in self.offinder_input:
+                    self.offinder_input.append(off_s)
                     self.off_d[seq[:self.rna_len]] = []
                     for x in range(self.mm_num):
                         self.off_d[seq[:self.rna_len]].append(0)
     
-                sub_res = [seq, [pos, rel_pos, strand, gc(seq[:self.rna_len]), edit_pos, pam_change], pbs_l, rtt_l, []]
+                sub_res = [seq, [pos + 1, rel_pos, strand, gc(seq[:self.rna_len]), edit_pos, pam_change], pbs_l, rtt_l, []]
     
-                for i in range(self.mm_num):
-                    sub_res[1].append(0)
                 self.seq_list.append(sub_res)
 
             pos += 1
-            m = pattern.search(self.ref_seq, pos)
+            m = pattern_r.search(self.ref_seq, pos)
 
         pos = 0
         m = pattern.search(self.ind_seq, pos)
@@ -160,60 +167,82 @@ class PeDesigner:
                     line = self.seq_list[i]
                     if line[1][2] != '-':
                         continue
-                    cv = line[1][1] + len(self.pam) + 3 - 1 + self.needle_res[0].count('-') - self.needle_res[2].count('-')
-                    distance = cv - (pos + self.rna_len - 3 - 1)
+                    cv = line[1][0] + len(self.pam) + 3 - 1 + self.needle_res[0].count('-') - self.needle_res[2].count('-')
+                    distance = (pos + self.rna_len - 3) - cv 
                     if distance == 0:
                         distance += 1
                     if self.nick_min <= abs(distance) <= self.nick_max:
-                        sub_nick = [seq, pos , rel_pos, '+', gc(seq[:self.rna_len]), distance, PE_type]
-                        for x in range(self.mm_num):
-                            sub_nick.append(0)
-                        self.seq_list[i][4].append(sub_nick)
-                        selected = True
-
-            else:
-                rel_pos = round((pos + self.rna_len + len(self.pam) + 3) * 100 / len(self.ind_seq), 2)
-                seq = rev_comp(seq)
-                for i in range(len(self.seq_list)):
-                    line = self.seq_list[i]
-                    if line[1][2] != '+':
-                        continue
-                    cv = line[1][1] + len(self.pam) + 3 - 1
-                    distance = (pos + len(self.pam) + 3 - 1) - cv
-                    if distance == 0:
-                        distance -= 1
-                    if self.nick_min <= abs(distance) <= self.nick_max:
-                        sub_nick = [seq, pos, rel_pos, '-', gc(seq[len(self.pam):]), distance, PE_type]
+                        sub_nick = [seq, pos + 1, rel_pos, '+', gc(seq[:self.rna_len]), distance, PE_type]
                         for x in range(self.mm_num):
                             sub_nick.append(0)
                         self.seq_list[i][4].append(sub_nick)
                         selected = True
 
             if selected == True:
-                if seq[:self.rna_len] + ' ' + str(self.mm_num - 1) not in self.offinder_input:
-                    self.offinder_input.append(seq[:self.rna_len] + ' ' + str(self.mm_num - 1))
+                off_s = seq[:self.rna_len] + 'N' * len(self.pam) + ' ' + str(self.mm_num - 1)
+                if off_s not in self.offinder_input:
+                    self.offinder_input.append(off_s)
                     self.off_d[seq[:self.rna_len]] = []
                     for x in range(self.mm_num):
                         self.off_d[seq[:self.rna_len]].append(0)
 
             pos += 1
             m = pattern.search(self.ind_seq, pos)
-    
+        
+        pos = 0
+        m = pattern_r.search(self.ind_seq, pos)
+        while m != None:
+            seq = m.group()
+            pos = m.start()
+            selected = False
+            PE_type = 'PE3'
+            if pos + self.needle_res[2].count('-') < self.mutation_ed and pos + self.rna_len + len(self.pam) > self.mutation_st:
+                PE_type= 'PE3b'
+            if m.group(1) != None:
+                rel_pos = round((pos + self.rna_len + len(self.pam) + 3) * 100 / len(self.ind_seq), 2)
+                seq = rev_comp(seq)
+                for i in range(len(self.seq_list)):
+                    line = self.seq_list[i]
+                    if line[1][2] != '+':
+                        continue
+                    cv = line[1][0] + self.rna_len - 3
+                    distance = (pos + len(self.pam) + 3 + 1) - cv
+                    if distance == 0:
+                        distance -= 1
+                    if self.nick_min <= abs(distance) <= self.nick_max:
+                        sub_nick = [seq, pos + 1, rel_pos, '-', gc(seq[len(self.pam):]), distance, PE_type]
+                        for x in range(self.mm_num):
+                            sub_nick.append(0)
+                        self.seq_list[i][4].append(sub_nick)
+                        selected = True
+
+            if selected == True:
+                off_s = seq[:self.rna_len] + 'N' * len(self.pam) + ' ' + str(self.mm_num - 1)
+                if off_s not in self.offinder_input:
+                    self.offinder_input.append(off_s)
+                    self.off_d[seq[:self.rna_len]] = []
+                    for x in range(self.mm_num):
+                        self.off_d[seq[:self.rna_len]].append(0)
+
+            pos += 1
+            m = pattern_r.search(self.ind_seq, pos)
+
     def run_cas_offinder(self):
         
         with open('cas-offinder-input.txt','w') as fw:
             fw.write('\n'.join(self.offinder_input))
             
-        #proc = Popen(['cas-offinder', 'cas-offinder-input.txt', 'G', 'cas-offinder-output.txt'], stdout=PIPE).communicate()
+        proc = Popen(['cas-offinder', 'cas-offinder-input.txt', 'G', 'cas-offinder-output.txt'], stdout=PIPE).communicate()
 
         with open('cas-offinder-output.txt') as f:
             for line in f:
                 line_sp = line.strip().split('\t')
                 self.off_d[line_sp[0][:self.rna_len]][int(line_sp[5])] += 1
+        print(self.off_d)
             
     def write_result(self):
         
-        menu = ["Target Sequence (5' to 3'), Position, Cleavage Position (%), Direction, GC Content, Edit Position, PAM Change"]
+        menu = ["Target Sequence (5' to 3')", "Position", "Cleavage Position (%)", "Direction", "GC Content", "Edit Position", "PAM Change"]
         for i in range(self.mm_num): menu.append('Mismatch {0}'.format(i))
         menu += ["Type", "Extension Sequence", "PBS length", "PBS GC Content", "RTT length", "RTT GC Content", "Target Sequence (5' to 3')", "Position", "Cleavage Position (%)", "Direction", "GC Content", "Distance", "PE Type"]
         for i in range(self.mm_num): menu.append('Mimatch {0}'.format(i))
