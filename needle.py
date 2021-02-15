@@ -235,4 +235,4 @@ def needle(a, b, gapopen, gapextend, endgapopen, endgapextend):
     aln_b = "".join(aln_b[::-1])
     aln_r = "".join(aln_r[::-1])
     
-    return [aln_a, aln_r, aln_b, score]
+    return [aln_a, aln_r, aln_b]
