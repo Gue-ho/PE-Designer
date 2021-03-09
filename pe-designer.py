@@ -30,6 +30,7 @@ class PeDesigner:
         self.rtt_max = args.rtt_max
         self.nick_min = args.nick_min
         self.nick_max = args.nick_max
+        self.use_cpus = args.use_cpus
         self.seq_list = [] #d -> [seq, info_l, pbs_d, rtt_d, nick_d]
         self.off_d = {}
 
@@ -231,8 +232,10 @@ class PeDesigner:
         
         with open('cas-offinder-input.txt','w') as fw:
             fw.write('\n'.join(self.offinder_input))
-            
-        proc = Popen(['cas-offinder', 'cas-offinder-input.txt', 'G', 'cas-offinder-output.txt'], stdout=PIPE).communicate()
+        if self.use_cpus:
+            proc = Popen(['cas-offinder', 'cas-offinder-input.txt', 'C', 'cas-offinder-output.txt'], stdout=PIPE).communicate()
+        else:
+            proc = Popen(['cas-offinder', 'cas-offinder-input.txt', 'G', 'cas-offinder-output.txt'], stdout=PIPE).communicate()
 
         with open('cas-offinder-output.txt') as f:
             for line in f:
@@ -286,6 +289,7 @@ def parse_args():
     parser.add_argument("--rtt_max", type=int, help="Maximum of RTT length", default = 20)
     parser.add_argument("--nick_min", type=int, help="Minimum of nicking distance", default = 0)
     parser.add_argument("--nick_max", type=int, help="Maximum of nicking distance", default = 100)
+    parser.add_argument("--use_cpus", action='store_true', help="Use cpu instead of gpu (cas-offinder)", required=False)
     
     return parser.parse_args()
 
