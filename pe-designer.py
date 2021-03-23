@@ -245,7 +245,7 @@ class PeDesigner:
             
     def write_result(self):
         
-        multiply = 8 + self.mm_num
+        multiply = 7 + self.mm_num
         menu = ["Target Sequence (5' to 3')", "Position", "Cleavage Position (%)", "Direction", "GC Content", "Edit Position", "PAM Change"]
         for i in range(self.mm_num): menu.append('Mismatch {0}'.format(i))
         menu += ["Type", "Extension Sequence", "PBS length", "PBS GC Content", "RTT length", "RTT GC Content", "Target Sequence (5' to 3')", "Position", "Cleavage Position (%)", "Direction", "GC Content", "Distance", "PE Type"]
