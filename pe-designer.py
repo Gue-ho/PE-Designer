@@ -245,6 +245,7 @@ class PeDesigner:
             
     def write_result(self):
         
+        multiply = 8 + self.mm_num
         menu = ["Target Sequence (5' to 3')", "Position", "Cleavage Position (%)", "Direction", "GC Content", "Edit Position", "PAM Change"]
         for i in range(self.mm_num): menu.append('Mismatch {0}'.format(i))
         menu += ["Type", "Extension Sequence", "PBS length", "PBS GC Content", "RTT length", "RTT GC Content", "Target Sequence (5' to 3')", "Position", "Cleavage Position (%)", "Direction", "GC Content", "Distance", "PE Type"]
@@ -262,10 +263,10 @@ class PeDesigner:
                 for x in i[2]:
                     for y in i[3]:
                         if i[1][2] == '+':
-                            s = main_str + 'pegRNA\t' + rev_comp(x[0] + ' ' + y[0]) + '\t' + str(x[1]) + '\t' + str(x[2]) + '\t' + str(y[1]) + '\t' + str(y[2]) + '\t' +'-\t'*10
+                            s = main_str + 'pegRNA\t' + rev_comp(x[0] + ' ' + y[0]) + '\t' + str(x[1]) + '\t' + str(x[2]) + '\t' + str(y[1]) + '\t' + str(y[2]) + '\t' + '-\t'*multiply
                             fw.write(s[:-1] + '\n')
                         if i[1][2] == '-':
-                            s = main_str + 'pegRNA\t' + y[0] + ' ' + x[0] + '\t' + str(x[1]) + '\t' + str(x[2]) + '\t' + str(y[1]) + '\t' + str(y[2]) + '\t' +'-\t'*10
+                            s = main_str + 'pegRNA\t' + y[0] + ' ' + x[0] + '\t' + str(x[1]) + '\t' + str(x[2]) + '\t' + str(y[1]) + '\t' + str(y[2]) + '\t' + '-\t'*multiply
                             fw.write(s[:-1] + '\n')
                 for x in i[4]:
                     mm_nick = self.off_d[x[0][:self.rna_len]]
