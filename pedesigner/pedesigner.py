@@ -1,6 +1,6 @@
 import argparse, time, sys, re
 from subprocess import Popen, PIPE
-from needle import needle
+from pedesigner.needle import needle
 
 def rev_comp(s): return s.translate(s.maketrans('ATGCRYSWKMBDHV', 'TACGYRWSMKVHDB'))[::-1]
 
@@ -37,7 +37,7 @@ class PeDesigner:
         self.offinder_input = [self.ref_dir, 'N'*self.rna_len + self.pam] 
 
     def set_mutation(self):
-        needle_res = needle(self.ref_seq, self.ind_seq, 10, -2, 10, -2)
+        needle_res = pedesigner.needle(self.ref_seq, self.ind_seq, 10, -2, 10, -2)
         self.mutation_st = -1
         for n, sym in enumerate(needle_res[1]):
             if sym != '|':
@@ -296,10 +296,10 @@ def parse_args():
 
 
 def main():
-    
     tst = time.time()
-    
-    c = PeDesigner(parse_args())
+    args = parse_args()
+
+    c = PeDesigner(args)
 
     c.set_mutation()
     print('find target...')
