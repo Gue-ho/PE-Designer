@@ -1,6 +1,8 @@
 pedesigner - A pegRNA tool for CRISPR prime editing
-====================================================
-(originally from: [PE-Designer](https://github.com/Gue-ho/PE-Designer))
+===================================================
+
+# **_original code: [PE-Designer](https://github.com/Gue-ho/PE-Designer)_**
+
 
 Prime editing tools that consist of a reverse transcriptase linked with Cas9 nickase are capable of generating targeted insertions, deletions, and base conversions without producing DNA double strand breaks or requiring any donor DNA.
 
